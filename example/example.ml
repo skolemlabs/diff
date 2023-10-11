@@ -4,7 +4,9 @@ type bar = { foo : foo } [@@deriving diff]
 let my_bar = { foo = { x = 42; y = "Skolem" } }
 
 let () =
-  let f = Diff.Infix.(Bar_foo --| Foo_x) in
-  let my_bar' = Diff.set my_bar f 10 in
+  let f = Diff.Field.Infix.(Bar_foo --| Foo_x) in
+  let v = 10 in
+  let () = Format.printf "Setting %a: %d\n%!" Diff.Field.pp f v in
+  let my_bar' = Diff.set my_bar f v in
   let x = Diff.get my_bar' f in
-  print_endline (string_of_int x)
+  Format.printf "Getting %a: %d\n%!" Diff.Field.pp f x
