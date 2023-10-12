@@ -16,7 +16,7 @@ end
 
 module Lidents = struct
   let field ~loc = { loc; txt = Longident.parse "Diff.Field.t" }
-  let add ~loc = { loc; txt = Longident.parse "Diff.Field.add" }
+  let register ~loc = { loc; txt = Longident.parse "Diff.Field.register" }
   let set_name ~loc = { loc; txt = Longident.parse "Diff.Field.set_name" }
   let unit ~loc = { loc; txt = Lident "()" }
   let option ~loc = { loc; txt = Lident "option" }
@@ -202,35 +202,7 @@ module Impl = struct
            ]
            None)
 
-  let generate_add ~fields ~name ~loc =
-    pstr_value ~loc Nonrecursive
-      (List.map
-         (fun { pld_name = { txt = field_name; _ }; pld_loc = loc; _ } ->
-           value_binding ~loc
-             ~pat:
-               (ppat_constraint ~loc (ppat_any ~loc)
-                  (ptyp_constr ~loc { txt = Lident "unit"; loc } []))
-             ~expr:
-               (pexp_apply ~loc
-                  (pexp_ident ~loc (Lidents.add ~loc))
-                  [
-                    ( Nolabel,
-                      pexp_construct ~loc
-                        {
-                          txt =
-                            Lident
-                              (Utils.constructor_name_of_field ~field_name ~name);
-                          loc;
-                        }
-                        None );
-                    (Nolabel, pexp_ident ~loc (Lidents.getter_name ~loc ~name));
-                    ( Nolabel,
-                      pexp_ident ~loc
-                        (Lidents.setter_name ~loc ~name) );
-                  ]))
-         fields)
-
-  let generate_name ~fields ~name ~loc =
+  let generate_register ~fields ~name ~loc =
     pstr_value ~loc Nonrecursive
       (List.map
          (fun { pld_name = { txt = field_name; _ }; pld_loc = loc; _ } ->
@@ -243,20 +215,22 @@ module Impl = struct
                   (ptyp_constr ~loc { txt = Lident "unit"; loc } []))
              ~expr:
                (pexp_apply ~loc
-                  (pexp_ident ~loc (Lidents.set_name ~loc))
+                  (pexp_ident ~loc (Lidents.register ~loc))
                   [
+                    ( Labelled "name",
+                      pexp_constant ~loc
+                        (Pconst_string (constructor_name, loc, None)) );
                     ( Nolabel,
                       pexp_construct ~loc
                         { txt = Lident constructor_name; loc }
                         None );
-                    ( Nolabel,
-                      pexp_constant ~loc
-                        (Pconst_string (constructor_name, loc, None)) );
+                    (Nolabel, pexp_ident ~loc (Lidents.getter_name ~loc ~name));
+                    (Nolabel, pexp_ident ~loc (Lidents.setter_name ~loc ~name));
                   ]))
          fields)
 
   let generate_getter_and_setter ~fields ~name ~loc =
-    pstr_value ~loc Recursive
+    pstr_value ~loc Nonrecursive
       [ generate_getter ~fields ~name ~loc; generate_setter ~fields ~name ~loc ]
 
   let generate ~ctxt:_ (_rec_flag, type_declarations) =
@@ -282,8 +256,7 @@ module Impl = struct
             generate_pre_attr ~loc
             :: generate_fields ~fields ~loc ~name ~ct
             :: generate_getter_and_setter ~fields ~name ~loc
-            :: generate_add ~fields ~name ~loc
-            :: generate_name ~fields ~name ~loc
+            :: generate_register ~fields ~name ~loc
             :: generate_post_attr ~loc :: acc)
       [] type_declarations
 end
