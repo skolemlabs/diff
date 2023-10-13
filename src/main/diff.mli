@@ -16,6 +16,11 @@ type t = {
   type setter = { f : 'a 'b. 'a -> ('a, 'b) t -> 'b -> 'a option } [@@unboxed]
   (** A polymorphic function that returns the type with the field set to the value. *)
 
+  type exn +=
+    | Unknown_field : (_, _) t -> exn
+    | Getter_invalid : (_, _) t -> exn
+    | Setter_invalid : (_, _) t -> exn
+
   val cons : ('a, 'b) t -> ('b, 'c) t -> ('a, 'c) t
   (** [cons l r] is a field that first indexes [l] and then [r]. *)
 
@@ -33,23 +38,26 @@ type t = {
   module Infix : sig
     val ( --| ) : ('a, 'b) t -> ('b, 'c) t -> ('a, 'c) t
   end
+
+  val get : 'a -> ('a, 'b) t -> 'b
+  (** [get v field] gets [field] from [v], throwing an error on exception. *)
+
+  val get_opt : 'a -> ('a, 'b) t -> 'b option
+  (** [get_opt v field] gets [field] from [v], returning [None] on exception. *)
+
+  val set : 'a -> ('a, 'b) t -> 'b -> 'a
+  (** [set v field x] sets [field] in [v] to [x], throwing an error on exception *)
+
+  val set_opt : 'a -> ('a, 'b) t -> 'b -> 'a option
+  (** [set_opt v field x] sets [field] in [v] to [x], returning [None] on exception *)
 end
 
-type error =
-  | Unknown_field : (_, _) Field.t -> error
-  | Getter_invalid : (_, _) Field.t -> error
-  | Setter_invalid : (_, _) Field.t -> error
+type _ spec =
+  | Leaf : { field : ('a, 'b) Field.t; equal : 'b -> 'b -> bool } -> 'a spec
+  | Child : { field : ('a, 'b) Field.t; spec : 'b spec } -> 'a spec
+  | Many : 'a spec list -> 'a spec
 
-exception Diff of error
+type _ t = Diff : { field : ('a, 'b) Field.t; new_ : 'b } -> 'a t
 
-val get : 'a -> ('a, 'b) Field.t -> 'b
-(** [get v field] gets [field] from [v], throwing an error on exception. *)
-
-val get_opt : 'a -> ('a, 'b) Field.t -> 'b option
-(** [get_opt v field] gets [field] from [v], returning [None] on exception. *)
-
-val set : 'a -> ('a, 'b) Field.t -> 'b -> 'a
-(** [set v field x] sets [field] in [v] to [x], throwing an error on exception *)
-
-val set_opt : 'a -> ('a, 'b) Field.t -> 'b -> 'a option
-(** [set_opt v field x] sets [field] in [v] to [x], returning [None] on exception *)
+val compute : 'a -> 'a -> 'a spec -> 'a t list
+val apply : 'a -> 'a t -> 'a
