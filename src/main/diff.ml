@@ -115,7 +115,19 @@ end
 type _ spec =
   | Leaf : { field : ('a, 'b) Field.t; equal : 'b -> 'b -> bool } -> 'a spec
   | Child : { field : ('a, 'b) Field.t; spec : 'b spec } -> 'a spec
+  | Opt_child : { field : ('a, 'b option) Field.t; spec : 'b spec } -> 'a spec
   | Many : 'a spec list -> 'a spec
+
+let leaf : type a b. field:(a, b) Field.t -> equal:(b -> b -> bool) -> a spec =
+ fun ~field ~equal -> Leaf { field; equal }
+
+let child : type a b. field:(a, b) Field.t -> spec:b spec -> a spec =
+ fun ~field ~spec -> Child { field; spec }
+
+let opt_child : type a b. field:(a, b option) Field.t -> spec:b spec -> a spec =
+ fun ~field ~spec -> Opt_child { field; spec }
+
+let many : type a. a spec list -> a spec = fun v -> Many v
 
 type _ t = Diff : { field : ('a, 'b) Field.t; new_ : 'b } -> 'a t
 
@@ -135,6 +147,23 @@ let compute : 'a. 'a -> 'a -> 'a spec -> 'a t list =
           f (Diff { field = Field.cons field field'; new_ })
         in
         (helper [@tailcall]) c0 c1 spec f acc
+    | Opt_child { field; spec } -> (
+        let o0 = Field.get v0 field in
+        let o1 = Field.get v1 field in
+        match (o0, o1, field) with
+        | None, None, _ -> acc
+        | Some _, None, _ | None, Some _, _ ->
+            f (Diff { field; new_ = o1 }) :: acc
+        | Some c0, Some c1, _ ->
+            let f (Diff { field = field'; new_ }) =
+              f
+                (Diff
+                   {
+                     field = Field.Cons (field, Field.Opt_map field');
+                     new_ = Some new_;
+                   })
+            in
+            helper c0 c1 spec f acc)
     | Many ls -> List.fold_left (fun acc l -> helper v0 v1 l f acc) acc ls
   in
   fun v0 v1 spec -> helper v0 v1 spec Fun.id []

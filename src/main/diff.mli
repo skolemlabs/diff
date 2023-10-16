@@ -52,10 +52,12 @@ type t = {
   (** [set_opt v field x] sets [field] in [v] to [x], returning [None] on exception *)
 end
 
-type _ spec =
-  | Leaf : { field : ('a, 'b) Field.t; equal : 'b -> 'b -> bool } -> 'a spec
-  | Child : { field : ('a, 'b) Field.t; spec : 'b spec } -> 'a spec
-  | Many : 'a spec list -> 'a spec
+type _ spec
+
+val leaf : field:('a, 'b) Field.t -> equal:('b -> 'b -> bool) -> 'a spec
+val child : field:('a, 'b) Field.t -> spec:'b spec -> 'a spec
+val opt_child : field:('a, 'b option) Field.t -> spec:'b spec -> 'a spec
+val many : 'a spec list -> 'a spec
 
 type _ t = Diff : { field : ('a, 'b) Field.t; new_ : 'b } -> 'a t
 

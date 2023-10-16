@@ -30,18 +30,20 @@ let recursive () =
     v
 
 let foo_spec =
-  Diff.Many
-    [
-      Leaf { field = Foo_x; equal = Int.equal };
-      Leaf { field = Foo_y; equal = String.equal };
-    ]
+  Diff.(
+    many
+      [
+        leaf ~field:Foo_x ~equal:Int.equal;
+        leaf ~field:Foo_y ~equal:String.equal;
+      ])
 
 let bar_spec =
-  Diff.Many
-    [
-      Leaf { field = Bar_z; equal = Float.equal };
-      Child { field = Bar_foo; spec = foo_spec };
-    ]
+  Diff.(
+    many
+      [
+        leaf ~field:Bar_z ~equal:Float.equal;
+        child ~field:Bar_foo ~spec:foo_spec;
+      ])
 
 let bar_diff () =
   let bar0, bar1 =
