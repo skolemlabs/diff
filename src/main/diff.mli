@@ -55,12 +55,32 @@ end
 type _ spec
 
 val leaf : field:('a, 'b) Field.t -> equal:('b -> 'b -> bool) -> 'a spec
+(** [leaf ~field ~equal] is a terminal node in the spec tree.
+
+    When computing a diff, the fields are gotten using {!Field.get} and compared with [equal].
+    If the values are not equal, the diff includes the new value. *)
+
 val child : field:('a, 'b) Field.t -> spec:'b spec -> 'a spec
+(** [child ~field ~spec] is an intermediate node in the spec tree. 
+
+    When computing a diff, the diff for the children is recursively computed. *)
+
 val opt_child : field:('a, 'b option) Field.t -> spec:'b spec -> 'a spec
+(** [opt_child ~field ~spec] is an optional intermediate node in the spec tree.
+
+    When computing a diff, the diff for the children is recursively computed
+    {i if} the child is present. *)
+
 val many : 'a spec list -> 'a spec
+(** [many specs] combines [specs] into a single spec *)
 
 type _ t = Diff : { field : ('a, 'b) Field.t; new_ : 'b } -> 'a t
 
 val compute : 'a -> 'a -> 'a spec -> 'a t list
+(** [compute v0 v1 spec] returns a list of all the differences between [v0] and [v1] using [spec] to traverse the values. *)
+
 val apply : 'a -> 'a t -> 'a
+(** [apply v diff] returns [v] with [diff] applied *)
+
 val apply_all : 'a -> 'a t list -> 'a
+(** [apply_all v diffs] returns [v] with all [diffs] applied *)
