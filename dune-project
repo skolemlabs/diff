@@ -16,4 +16,6 @@
  (synopsis "A library for generating diffs from sum types")
  (depends
   (dune (>= 3.10.0))
-  (ppxlib (>= 0.25.0))))
+  (ppxlib (>= 0.25.0))
+  (ppx_deriving :with-test)
+  (tezt (and :with-test (and (>= 3.1.1) (< 4.0.0))))))
