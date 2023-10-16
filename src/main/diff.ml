@@ -163,7 +163,7 @@ let compute : 'a. 'a -> 'a -> 'a spec -> 'a t list =
                      new_ = Some new_;
                    })
             in
-            helper c0 c1 spec f acc)
+            (helper [@tailcall]) c0 c1 spec f acc)
     | Many ls -> List.fold_left (fun acc l -> helper v0 v1 l f acc) acc ls
   in
   fun v0 v1 spec -> helper v0 v1 spec Fun.id []
