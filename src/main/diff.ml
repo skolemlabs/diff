@@ -120,24 +120,27 @@ type _ spec =
 type _ t = Diff : { field : ('a, 'b) Field.t; new_ : 'b } -> 'a t
 
 let compute : 'a. 'a -> 'a -> 'a spec -> 'a t list =
-  let rec helper : type b. b -> b -> b spec -> b t list =
-   fun v0 v1 spec ->
+  let rec helper :
+      type b c. b -> b -> b spec -> (b t -> c t) -> c t list -> c t list =
+   fun v0 v1 spec f acc ->
     match spec with
     | Leaf { field; equal } ->
         let f0 = Field.get v0 field in
         let f1 = Field.get v1 field in
-        if equal f0 f1 then [] else [ Diff { field; new_ = f1 } ]
+        if equal f0 f1 then acc else f (Diff { field; new_ = f1 }) :: acc
     | Child { field; spec } ->
         let c0 = Field.get v0 field in
         let c1 = Field.get v1 field in
-        let l = helper c0 c1 spec in
-        List.map
-          (fun (Diff { field = f; new_ }) ->
-            Diff { field = Field.cons field f; new_ })
-          l
-    | Many ls -> List.map (fun l -> helper v0 v1 l) ls |> List.concat
+        let f (Diff { field = field'; new_ }) =
+          f (Diff { field = Field.cons field field'; new_ })
+        in
+        (helper [@tailcall]) c0 c1 spec f acc
+    | Many ls -> List.fold_left (fun acc l -> helper v0 v1 l f acc) acc ls
   in
-  helper
+  fun v0 v1 spec -> helper v0 v1 spec Fun.id []
 
 let apply : type a. a -> a t -> a =
  fun v (Diff { field; new_ }) -> Field.set v field new_
+
+let apply_all : type a. a -> a t list -> a =
+ fun v ds -> List.fold_left apply v ds

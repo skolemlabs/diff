@@ -61,3 +61,4 @@ type _ t = Diff : { field : ('a, 'b) Field.t; new_ : 'b } -> 'a t
 
 val compute : 'a -> 'a -> 'a spec -> 'a t list
 val apply : 'a -> 'a t -> 'a
+val apply_all : 'a -> 'a t list -> 'a

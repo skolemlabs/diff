@@ -11,7 +11,7 @@ module Utils = struct
     match name with "t" -> "getter" | _ -> name ^ "_getter"
 
   let setter_name ~name =
-    match name with "t" -> "getter" | _ -> name ^ "_setter"
+    match name with "t" -> "setter" | _ -> name ^ "_setter"
 end
 
 module Lidents = struct
@@ -117,7 +117,7 @@ module Impl = struct
                           (ptyp_constr ~loc { txt = Lident "a"; loc } []))
                        (pexp_fun ~loc Nolabel None
                           (ppat_constraint ~loc
-                             (ppat_var ~loc { txt = "field"; loc })
+                             (ppat_var ~loc { txt = "__field"; loc })
                              (ptyp_constr ~loc (Lidents.field ~loc)
                                 [
                                   ptyp_constr ~loc { txt = Lident "a"; loc } [];
@@ -125,7 +125,8 @@ module Impl = struct
                                 ]))
                           (pexp_constraint ~loc
                              (pexp_match ~loc
-                                (pexp_ident ~loc { txt = Lident "field"; loc })
+                                (pexp_ident ~loc
+                                   { txt = Lident "__field"; loc })
                                 (generate_getter_cases ~loc ~fields ~name))
                              (ptyp_constr ~loc (Lidents.option ~loc)
                                 [
@@ -151,7 +152,7 @@ module Impl = struct
               (pexp_record ~loc
                  [
                    ( { txt = Lident field_name; loc },
-                     pexp_ident ~loc { txt = Lident "x"; loc } );
+                     pexp_ident ~loc { txt = Lident "__v"; loc } );
                  ]
                  (Some (pexp_ident ~loc { txt = Lident name; loc })))))
 
@@ -179,7 +180,7 @@ module Impl = struct
                           (ptyp_constr ~loc { txt = Lident "a"; loc } []))
                        (pexp_fun ~loc Nolabel None
                           (ppat_constraint ~loc
-                             (ppat_var ~loc { txt = "field"; loc })
+                             (ppat_var ~loc { txt = "__field"; loc })
                              (ptyp_constr ~loc (Lidents.field ~loc)
                                 [
                                   ptyp_constr ~loc { txt = Lident "a"; loc } [];
@@ -187,12 +188,12 @@ module Impl = struct
                                 ]))
                           (pexp_fun ~loc Nolabel None
                              (ppat_constraint ~loc
-                                (ppat_var ~loc { txt = "x"; loc })
+                                (ppat_var ~loc { txt = "__v"; loc })
                                 (ptyp_constr ~loc { txt = Lident "b"; loc } []))
                              (pexp_constraint ~loc
                                 (pexp_match ~loc
                                    (pexp_ident ~loc
-                                      { txt = Lident "field"; loc })
+                                      { txt = Lident "__field"; loc })
                                    (generate_setter_cases ~loc ~fields ~name))
                                 (ptyp_constr ~loc (Lidents.option ~loc)
                                    [

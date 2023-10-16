@@ -1,0 +1,5 @@
+(test
+ (name test)
+ (libraries diff tezt)
+ (preprocess
+  (pps diff.ppx)))
