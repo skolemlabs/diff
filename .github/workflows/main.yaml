@@ -1,0 +1,59 @@
+name: Build, test, and check
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+        ocaml-compiler:
+          - 4.14.x
+          - 5.1.x
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Use OCaml ${{ matrix.ocaml-compiler }}
+        uses: ocaml/setup-ocaml@v2
+        with:
+          ocaml-compiler: ${{ matrix.ocaml-compiler }}
+
+      - name: Install OPAM dependencies
+        run: opam install . --deps-only --with-test
+
+      - name: Build
+        run: opam exec -- dune build
+
+      - name: Run tests
+        run: opam exec -- dune runtest
+
+  publish-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Use OCaml 4.14.x
+        uses: ocaml/setup-ocaml@v2
+        with:
+          ocaml-compiler: 4.14.x
+          dune-cache: true
+
+      - name: Install OPAM dependencies
+        run: opam install . --deps-only --with-doc
+
+      - name: Build docs
+        run: opam exec -- dune build @doc
+
+      - name: Upload docs
+        uses: actions/upload-artifact@v2
+        with:
+          name: html-docs
+          path: _build/default/_doc/_html/
