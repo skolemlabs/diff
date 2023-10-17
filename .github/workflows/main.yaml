@@ -32,7 +32,7 @@ jobs:
         run: opam exec -- dune build
 
       - name: Run tests
-        run: opam exec -- dun runtest
+        run: opam exec -- dune runtest
 
   publish-docs:
     runs-on: ubuntu-latest
