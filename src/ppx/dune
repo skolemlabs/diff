@@ -1,0 +1,6 @@
+(library
+ (name ppx_diff)
+ (public_name diff.ppx)
+ (libraries ppxlib)
+ (ppx_runtime_libraries diff)
+ (kind ppx_deriver))

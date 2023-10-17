@@ -1,0 +1,3 @@
+(library
+ (name diff)
+ (public_name diff))
