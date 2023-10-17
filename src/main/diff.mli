@@ -1,4 +1,6 @@
 module Field : sig
+  (** This module contains what might be described as faux lenses. This includes support for composition, getting, setting, etc. *)
+
   type (_, _) t = ..
   (** An open type that represents a field on a record.
 
