@@ -18,7 +18,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       
       - name: Use OCaml ${{ matrix.ocaml-compiler }}
         uses: ocaml/setup-ocaml@v2
@@ -38,7 +38,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Use OCaml 4.14.x
         uses: ocaml/setup-ocaml@v2
@@ -57,3 +57,27 @@ jobs:
         with:
           name: html-docs
           path: _build/default/_doc/_html/
+
+  check-changes:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Determine if CHANGES changed
+        id: changes-changed
+        uses: tj-actions/changed-files@v39
+        with:
+          files_yaml: |
+            changes:
+              - 'CHANGES'
+
+      - name: Fail if CHANGES did not change
+        if: steps.changes-changed.outputs.changes_any_changed == 'false'
+        run: |
+          echo "No changes made to the CHANGES file."
+          echo "Please update the file with your changes."
+          exit 1

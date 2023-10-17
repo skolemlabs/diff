@@ -1,3 +1,5 @@
 1.0.0
 ========
 - #1: initial implementation
+- #2: add GitHub Actions-based CI
+- #3: check if CHANGES file was edited in CI
