@@ -2,18 +2,18 @@
 
 (name diff)
 
-(source (github skolemlabs/diff))
 
 (generate_opam_files true)
 
 (version 1.0.0)
-
+(source (github skolemlabs/diff))
+(license MIT)
 (authors "Zach Baylin <zach.baylin@skolem.com>")
 (maintainers "Zach Baylin <zach.baylin@skolem.com>")
 
 (package
  (name diff)
- (synopsis "A library for generating diffs from product types.")
+ (synopsis "A library for generating diffs from product types")
  (depends
   (ppxlib (>= 0.25.0))
   (ocamlformat :with-dev-setup)
