@@ -24,13 +24,18 @@ module Field = struct
   type getter = { f : 'a 'b. 'a -> ('a, 'b) t -> 'b option } [@@unboxed]
   type setter = { f : 'a 'b. 'a -> ('a, 'b) t -> 'b -> 'a option } [@@unboxed]
 
-  type exn +=
-    | Unknown_field : (_, _) t -> exn
-    | Getter_invalid : (_, _) t -> exn
-    | Setter_invalid : (_, _) t -> exn
+  type error =
+    | Unknown_field : (_, _) t -> error
+    | Getter_invalid : (_, _) t -> error
+    | Setter_invalid : (_, _) t -> error
+
+  exception Diff_field of error
 
   let getter_setter_map = Hashtbl.create 64
   let name_map = Hashtbl.create 64
+
+  let name : type a b. (a, b) t -> string option =
+   fun f -> Hashtbl.find_opt name_map (Field f)
 
   let cons : type a b c. (a, b) t -> (b, c) t -> (a, c) t =
    fun l r -> Cons (l, r)
@@ -64,6 +69,11 @@ module Field = struct
           ~none:(Utils.pp_const "(unknown)")
           Format.pp_print_string fmt name_opt
 
+  let pp_error fmt = function
+    | Unknown_field _ -> Format.pp_print_string fmt "unknown field"
+    | Getter_invalid f -> Format.fprintf fmt "getter invalid for field %a" pp f
+    | Setter_invalid f -> Format.fprintf fmt "setter invalid for field %a" pp f
+
   let rec get : type a b. a -> (a, b) t -> b =
    fun v field ->
     let open Option_ext.Infix in
@@ -76,13 +86,20 @@ module Field = struct
     | _ ->
         let g, _ =
           Hashtbl.find_opt getter_setter_map (Field field)
-          |> Option_ext.value_lazy ~f:(fun () -> raise (Unknown_field field))
+          |> Option_ext.value_lazy ~f:(fun () ->
+                 raise (Diff_field (Unknown_field field)))
         in
         g.f v field
-        |> Option_ext.value_lazy ~f:(fun () -> raise (Getter_invalid field))
+        |> Option_ext.value_lazy ~f:(fun () ->
+               raise (Diff_field (Getter_invalid field)))
 
   let get_opt : type a b. a -> (a, b) t -> b option =
-   fun v field -> try Some (get v field) with _ -> None
+   fun v field -> try Some (get v field) with Diff_field _ -> None
+
+  let get_res : type a b. a -> (a, b) t -> (b, [> `Diff_field of error ]) result
+      =
+   fun v field ->
+    try Ok (get v field) with Diff_field e -> Error (`Diff_field e)
 
   let rec set : type a b. a -> (a, b) t -> b -> a =
    fun v field x ->
@@ -99,16 +116,25 @@ module Field = struct
     | _ ->
         let _, s =
           Hashtbl.find_opt getter_setter_map (Field field)
-          |> Option_ext.value_lazy ~f:(fun () -> raise (Unknown_field field))
+          |> Option_ext.value_lazy ~f:(fun () ->
+                 raise (Diff_field (Unknown_field field)))
         in
         s.f v field x
-        |> Option_ext.value_lazy ~f:(fun () -> raise (Setter_invalid field))
+        |> Option_ext.value_lazy ~f:(fun () ->
+               raise (Diff_field (Setter_invalid field)))
 
   let set_opt : type a b. a -> (a, b) t -> b -> a option =
-   fun v field x -> try Some (set v field x) with _ -> None
+   fun v field x -> try Some (set v field x) with Diff_field _ -> None
+
+  let set_res :
+      type a b. a -> (a, b) t -> b -> (a, [> `Diff_field of error ]) result =
+   fun v field x ->
+    try Ok (set v field x) with Diff_field e -> Error (`Diff_field e)
 
   module Infix = struct
     let ( --| ) = cons
+    let ( ?+ ) = opt_map
+    let ( ?* ) = opt_bind
   end
 end
 

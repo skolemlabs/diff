@@ -13,10 +13,7 @@ let bar () =
 
 let recursive () =
   let recursive = { v = 1; r = Some { v = 2; r = None } } in
-  let f =
-    Diff.Field.(
-      Infix.(Recursive_r --| opt_bind Recursive_r --| opt_map Recursive_v))
-  in
+  let f = Diff.Field.Infix.(Recursive_r --| ?*Recursive_r --| ?+Recursive_v) in
   let v' = Some 3 in
   let () =
     Format.printf "Setting %a: %a\n%!" Diff.Field.pp f

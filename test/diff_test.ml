@@ -1,10 +1,6 @@
 module T = Tezt
 open T.Base
-
-type 'a field = F : ('a, _) Diff.Field.t -> 'a field
-
-let field () = Tezt.Check.equalable (fun fmt (F f) -> Diff.Field.pp fmt f) ( = )
-let field_from_diff (Diff.Diff { field; _ }) = F field
+open Test_utils
 
 let () =
   T.Test.register ~__FILE__ ~title:"compute diff with single field"
@@ -48,7 +44,7 @@ let () =
   let y1 = { j = 2.0; x = { i = 2 } } in
   let diff = Diff.compute y0 y1 y_spec in
   let fields = List.map field_from_diff diff in
-  let expected = Diff.Field.(Infix.[ F (Y_x --| X_i); F Y_j ]) in
+  let expected = Diff.Field.Infix.[ F (Y_x --| X_i); F Y_j ] in
   T.Check.(
     (fields = expected) ~__LOC__
       (list (field ()))
@@ -76,9 +72,7 @@ let () =
   let z1 = { y = Some { x = Some { i = 456 } } } in
   let diff = Diff.compute z0 z1 z_spec in
   let fields = List.map field_from_diff diff in
-  let expected =
-    Diff.Field.(Infix.[ F (Z_y --| opt_map (Y_x --| opt_map X_i)) ])
-  in
+  let expected = Diff.Field.Infix.[ F (Z_y --| ?+(Y_x --| ?+X_i)) ] in
   T.Check.(
     (fields = expected) ~__LOC__
       (list (field ()))
