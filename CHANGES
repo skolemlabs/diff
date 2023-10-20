@@ -1,3 +1,7 @@
+unreleased
+========
+- #5: set minimum OCaml version
+
 1.0.1
 ========
 - #4: fix minimum ppxlib version
