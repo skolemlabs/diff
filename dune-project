@@ -5,7 +5,7 @@
 
 (generate_opam_files true)
 
-(version 1.0.1)
+(version 1.0.2)
 (source (github skolemlabs/diff))
 (license MIT)
 (authors "Zach Baylin <zach.baylin@skolem.com>")
