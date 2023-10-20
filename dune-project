@@ -15,7 +15,7 @@
  (name diff)
  (synopsis "A library for generating diffs from product types")
  (depends
-  (ppxlib (>= 0.25.0))
+  (ppxlib (>= 0.26.0))
   (ocamlformat :with-dev-setup)
   (ppx_deriving :with-test)
   (tezt (and :with-test (and (>= 3.1.1) (< 4.0.0))))))
