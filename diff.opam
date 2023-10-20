@@ -9,6 +9,7 @@ homepage: "https://github.com/skolemlabs/diff"
 bug-reports: "https://github.com/skolemlabs/diff/issues"
 depends: [
   "dune" {>= "3.10"}
+  "ocaml" {>= "4.08.0"}
   "ppxlib" {>= "0.26.0"}
   "ocamlformat" {with-dev-setup}
   "ppx_deriving" {with-test}
